@@ -23,8 +23,7 @@ for (corr_1 in corr_sequence) {
 }
 
 # simulated_distribution <- readRDS("./errors/package_em R_init_algo_rebmix.rds")$simulated_distribution
-import::from(foreach, "%dopar%")
-test_parameters_distribution <- benchmark_multivariate_GMM_estimation_parallel(
+test_parameters_distribution <- benchmark_multivariate_GMM_estimation_with_socket(
   mixture_functions = relevant_mixture_functions,
   initialisation_algorithms = c("kmeans"),
   sigma_values = sigma_values[1],
