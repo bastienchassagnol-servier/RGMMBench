@@ -285,6 +285,7 @@ benchmark_multivariate_GMM_estimation <- function(mixture_functions,
 
 
 #' @rdname benchmark_univariate_GMM_estimation
+#' @importFrom foreach %dopar%
 #' @export
 
 benchmark_multivariate_GMM_estimation_parallel <- function(mixture_functions, mean_values, proportions, sigma_values,
@@ -323,7 +324,8 @@ benchmark_multivariate_GMM_estimation_parallel <- function(mixture_functions, me
 
         for (n in nobservations) {
           filename <- paste0(n, "_observations_entropy", entropy_value, "_OVL_", balanced_ovl)
-          distribution_parameters_per_config <- parallel::mclapply(1:Nbootstrap, function(t) {
+          cl <- parallel::makeCluster(cores, type="FORK"); doParallel::registerDoParallel(cl)
+          distribution_parameters_per_config <- foreach::foreach (t=1:Nbootstrap, .combine=rbind) %dopar% {
             simulated_distribution <- simulate_multivariate_GMM(theta = true_theta, n = n) # simulation
             distribution_parameters_per_run <- tibble::tibble()
             for (init_algo in initialisation_algorithms) {
@@ -388,7 +390,8 @@ benchmark_multivariate_GMM_estimation_parallel <- function(mixture_functions, me
             } # initialization algorithm
             message(glue::glue("Bootstrap {t} has been performed.\n\n"))
             return(distribution_parameters_per_run)
-          }, mc.cores = cores) %>% dplyr::bind_rows()
+          }
+          parallel::stopCluster(cl) # stop the parallel computation
 
           #################################################################
           ##     summarize results obtained per scenario configuration   ##
